@@ -1,0 +1,20 @@
+// Shared Tailwind class constants for form controls
+export const INPUT_BASE = 'w-full rounded-md px-4 py-2.5 text-sm'
+export const INPUT_BORDER_DEFAULT = 'border border-slate-300'
+export const INPUT_BORDER_HIGHLIGHT = 'border-[1.5px] border-primary'
+export const INPUT_CLASS_DEFAULT = `${INPUT_BASE} ${INPUT_BORDER_DEFAULT}`
+export const INPUT_CLASS_HIGHLIGHT = `${INPUT_BASE} ${INPUT_BORDER_HIGHLIGHT}`
+export const SELECT_CLASS_DEFAULT = `${INPUT_CLASS_DEFAULT} appearance-none bg-white text-slate-700`
+export const BUTTON_PRIMARY = 'w-full rounded-md bg-primary py-3 text-sm font-semibold text-white hover:bg-primary-dark'
+export const ADD_ANOTHER_CLASS = 'flex w-full items-center justify-center gap-2 rounded-lg border border-dashed border-primary py-3 text-sm font-medium text-primary transition hover:bg-primary/10'
+export const SEARCH_WRAPPER_CLASS = 'w-full md:w-[36%] md:shrink-0 relative'
+export const SEARCH_ICON_CLASS = 'pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-slate-400'
+export const SEARCH_INPUT_CLASS = 'w-full rounded-md border border-slate-300 bg-white pl-9 pr-3 py-2 text-sm text-slate-700 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-1'
+export const FILTER_BAR_CLASS = 'flex flex-col gap-3 pl-0 pr-0 p-4 md:flex-row md:items-center'
+export const ACTION_BUTTON_PRIMARY = 'inline-flex items-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-medium text-white shadow-md transition-colors hover:bg-primary-dark'
+export const PAGINATION_BUTTON_CLASS = 'rounded px-3 py-1 text-sm text-slate-600 border border-slate-200 hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed'
+export const MODAL_BACKDROP_CLASS = 'fixed inset-0 z-50 bg-black/40 flex items-center justify-center'
+export const MODAL_CARD_CLASS = 'rounded-lg bg-card shadow-xl'
+export const DROPDOWN_MENU_CLASS = 'absolute z-50 mt-1 overflow-hidden rounded-md border border-slate-200 bg-card shadow-lg'
+export const DROPDOWN_TRIGGER_BASE = 'inline-flex items-center gap-2 rounded-md px-3 py-2 text-sm font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-1'
+export const DROPDOWN_TRIGGER_OUTLINED = `${DROPDOWN_TRIGGER_BASE} border border-primary bg-card text-primary hover:border-primary-dark hover:bg-primary/5`
