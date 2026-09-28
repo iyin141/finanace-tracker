@@ -7,7 +7,9 @@ Create a `.env` file with the database connection, and a `.env.local` file (giti
 ```bash
 # .env — Database Configuration
 DATABASE_URL=postgresql://user:pass@ep-xxx.region.aws.neon.tech/dbname?sslmode=require
-APP_URL=http://localhost:3000
+# APP_URL is optional — on Vercel it's derived automatically from the
+# platform's own VERCEL_URL env var. Set APP_URL explicitly only for a
+# non-Vercel host or a custom domain.
 ```
 
 ```bash

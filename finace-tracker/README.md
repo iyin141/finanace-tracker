@@ -47,8 +47,9 @@ npm install
 3. Create a `.env` file with:
 ```bash
 DATABASE_URL=postgresql://user:pass@ep-xxx.region.aws.neon.tech/dbname?sslmode=require
-APP_URL=http://localhost:3000
 ```
+On Vercel, `APP_URL` is derived automatically from the platform's `VERCEL_URL` — set it
+explicitly only for a non-Vercel host or a custom domain.
 
 4. Create a `.env.local` file (gitignored, never committed) with:
 ```bash

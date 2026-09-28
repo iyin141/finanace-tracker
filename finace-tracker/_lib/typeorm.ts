@@ -4,6 +4,10 @@ import "reflect-metadata";
 config({ path: [".env.local", ".env"] });
 
 import { DataSource } from "typeorm";
+// TypeORM requires the "pg" driver by a runtime string, which Vercel's file
+// tracer can't see statically — without this import the deployed function
+// bundle omits "pg" entirely (DriverPackageNotInstalledError in production).
+import "pg";
 
 import { Expense } from "./entities/Expense";
 import { Category } from "./entities/Category";

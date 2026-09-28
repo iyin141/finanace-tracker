@@ -1,5 +1,13 @@
 import { createAuthServer } from "@neondatabase/auth/server";
 
+/** Resolves the current deployment's origin without a hardcoded APP_URL. */
+function resolveOrigin(): string {
+  if (process.env.APP_URL) return process.env.APP_URL;
+  // Vercel injects VERCEL_URL (host only, no protocol) at build & runtime.
+  if (process.env.VERCEL_URL) return `https://${process.env.VERCEL_URL}`;
+  return "http://localhost:3000";
+}
+
 /**
  * Auth client for standalone scripts (seed, migrations) that run outside a
  * live Next.js request, so `next/headers` isn't available. No session cookie
@@ -13,7 +21,7 @@ export const standaloneAuth = createAuthServer({
     getCookies: () => "",
     setCookie: () => {},
     getHeader: () => null,
-    getOrigin: () => process.env.APP_URL || "http://localhost:3000",
+    getOrigin: resolveOrigin,
     getFramework: () => "node-script",
   }),
 });
