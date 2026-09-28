@@ -4,8 +4,9 @@ A comprehensive household expense tracking application built with Next.js 16, Ty
 
 ## Features
 
-- **Multi-user Authentication** - Neon Auth-based login for household members
-- **Shared Household Data** - Both mom and dad have full admin access to all expenses
+- **Multi-user Authentication** - Neon Managed Better Auth (`@neondatabase/auth`) login for household members
+- **Admin Panel** - `/dashboard/admin` for user management (roles, invite, remove) plus quick links to every page
+- **Shared Household Data** - Household members have full admin access to all expenses
 - **Expense Tracking** - Log, edit, and delete expenses with categories
 - **Comments System** - Add notes and comments to expenses
 - **Price Comparison** - Compare grocery prices across dates
@@ -22,7 +23,7 @@ A comprehensive household expense tracking application built with Next.js 16, Ty
 - **Database**: PostgreSQL via Neon serverless
 - **ORM**: TypeORM with migration support
 - **State Management**: Zustand with persistence
-- **Authentication**: Neon Auth with JWT tokens
+- **Authentication**: Neon Managed Better Auth (`@neondatabase/auth`)
 - **Forms**: React Hook Form + Zod validation
 - **Charts**: Recharts for data visualization
 - **Export**: jsPDF, jspdf-autotable, xlsx
@@ -43,27 +44,42 @@ A comprehensive household expense tracking application built with Next.js 16, Ty
 npm install
 ```
 
-3. Create a `.env.local` file with:
+3. Create a `.env` file with:
 ```bash
 DATABASE_URL=postgresql://user:pass@ep-xxx.region.aws.neon.tech/dbname?sslmode=require
-NEON_AUTH_URL=https://ep-red-mountain-b4lbh23r.neonauth.c-6.us-east-2.aws.neon.tech/neondb/auth
+APP_URL=http://localhost:3000
 ```
+
+4. Create a `.env.local` file (gitignored, never committed) with:
+```bash
+NEON_AUTH_BASE_URL=https://ep-red-mountain-b4lbh23r.neonauth.c-6.us-east-2.aws.neon.tech/neondb/auth
+NEON_AUTH_COOKIE_SECRET=<openssl rand -base64 32>
+SEED_IYIN_EMAIL=iyin@household.local
+SEED_IYIN_PASSWORD=<real password>
+SEED_MOM_EMAIL=mom@household.local
+SEED_MOM_PASSWORD=<real password>
+SEED_DAD_EMAIL=dad@household.local
+SEED_DAD_PASSWORD=<real password>
+```
+
+See [SETUP.md](./SETUP.md) for the full breakdown.
 
 ### Database Setup
 
-1. Start the development server (TypeORM will auto-sync on first run):
+1. Run migrations:
 ```bash
-npm run dev
+npm run migration:run
 ```
 
-2. Seed the database with initial data:
+2. Seed the database — creates real Neon Auth accounts (not fake uids) plus categories and sample expenses:
 ```bash
-# Access the seed endpoint
-POST http://localhost:3000/api/seed
+npm run seed
+# or, against a running dev server:
+# POST http://localhost:3000/api/seed
 ```
 
 This will create:
-- Two admin users (mom@household.local, dad@household.local)
+- Real Neon Auth accounts + matching admin users, from the `SEED_*` env vars
 - 13 budget categories from the Excel template
 - Sample expenses for testing
 
@@ -73,9 +89,8 @@ This will create:
 npm run dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) and log in with:
-- Email: mom@household.local or dad@household.local
-- Password: Configure via Neon Auth
+Open [http://localhost:3000](http://localhost:3000) and log in with the email/password pairs you
+set in `.env.local` (`SEED_IYIN_*`, `SEED_MOM_*`, `SEED_DAD_*`).
 
 ## Project Structure
 
@@ -83,7 +98,8 @@ Open [http://localhost:3000](http://localhost:3000) and log in with:
 finace-tracker/
 ├── app/
 │   ├── api/              # API routes
-│   │   ├── auth/         # Authentication endpoints
+│   │   ├── auth/         # login, logout, me + [...path] SDK handler
+│   │   ├── admin/        # Admin-only user management endpoints
 │   │   ├── expenses/     # Expense CRUD
 │   │   ├── categories/   # Category management
 │   │   ├── stats/        # Dashboard statistics
@@ -91,20 +107,24 @@ finace-tracker/
 │   │   ├── upload/       # CSV/Excel import
 │   │   └── seed/         # Database seeding
 │   ├── auth/             # Login page
-│   ├── dashboard/       # Main application pages
+│   ├── dashboard/
+│   │   └── admin/        # Admin panel (index + users)
 │   ├── globals.css       # Global styles
 │   └── layout.tsx        # Root layout
 ├── _Components/
 │   └── Shared/           # Reusable UI components
 ├── _lib/
+│   ├── auth/
+│   │   └── server.ts     # createNeonAuth() instance
 │   ├── entities/         # TypeORM entities
 │   ├── migrations/       # Database migrations
 │   ├── seed/             # Database seeding scripts
 │   ├── typeorm.ts        # Database configuration
-│   ├── auth.ts           # Authentication utilities
+│   ├── auth.ts           # getSessionUser() / requireAdmin() helpers
 │   └── utils.ts         # Helper functions
 ├── _Stores/
 │   └── useAuthStore.ts   # Auth state management
+├── proxy.ts               # Route protection (Next.js 16 renamed middleware.ts)
 └── package.json
 ```
 
@@ -136,9 +156,16 @@ finace-tracker/
 ## API Endpoints
 
 ### Authentication
-- `POST /api/auth/login` - User login
-- `POST /api/auth/logout` - User logout
-- `GET /api/auth/me` - Get current user
+- `POST /api/auth/login` - User login (via `auth.signIn.email`)
+- `POST /api/auth/logout` - User logout (via `auth.signOut`)
+- `GET /api/auth/me` - Get current user (via `auth.getSession`)
+- `/api/auth/[...path]` - Mounted Neon Auth SDK handler (`auth.handler()`)
+
+### Admin
+- `GET /api/admin/users` - List users (admin only)
+- `POST /api/admin/users` - Create a real Neon Auth account + local user (admin only)
+- `PATCH /api/admin/users/[id]` - Change a user's role (admin only)
+- `DELETE /api/admin/users/[id]` - Remove a user's Neon Auth account and local row (admin only)
 
 ### Expenses
 - `GET /api/expenses` - List expenses
@@ -182,11 +209,14 @@ Total monthly budget: ₦3,500,000
 ## Authentication Flow
 
 1. User enters email/password on login page
-2. Frontend calls `/api/auth/login` with credentials
-3. Backend authenticates with Neon Auth endpoint
-4. On success, JWT token is stored in HttpOnly cookie
-5. User is redirected to dashboard
-6. All subsequent requests verify token via middleware
+2. Frontend calls `/api/auth/login`, which calls `auth.signIn.email()`
+3. Neon Auth's managed Better Auth service authenticates the request; on success, the SDK sets
+   an HttpOnly session cookie (signed with `NEON_AUTH_COOKIE_SECRET`)
+4. User is redirected to dashboard
+5. `proxy.ts` (Next.js 16 renamed `middleware.ts` → `proxy.ts`) checks `auth.getSession()` on every
+   request to `/dashboard/*`, redirecting unauthenticated users to `/auth/login?next=...`
+6. Protected API routes call `getSessionUser()` (`_lib/auth.ts`); admin-only routes call
+   `requireAdmin()`, which checks the app's own `users.role`, not Neon Auth's own role claim
 
 ## License
 

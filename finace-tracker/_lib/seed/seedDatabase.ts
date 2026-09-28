@@ -3,6 +3,49 @@ import { User } from "../entities/User";
 import { Category } from "../entities/Category";
 import { Expense } from "../entities/Expense";
 import { BUDGET_CATEGORIES } from "../utils";
+import { standaloneAuth as auth } from "../auth/standalone";
+
+interface SeedAccount {
+  email: string;
+  password: string;
+  name: string;
+}
+
+function seedAccounts(): SeedAccount[] {
+  const accounts: SeedAccount[] = [
+    { email: process.env.SEED_IYIN_EMAIL!, password: process.env.SEED_IYIN_PASSWORD!, name: "Iyin" },
+    { email: process.env.SEED_MOM_EMAIL!, password: process.env.SEED_MOM_PASSWORD!, name: "Mom" },
+    { email: process.env.SEED_DAD_EMAIL!, password: process.env.SEED_DAD_PASSWORD!, name: "Dad" },
+  ];
+  const missing = accounts.filter((a) => !a.email || !a.password);
+  if (missing.length > 0) {
+    throw new Error(
+      "Missing SEED_*_EMAIL / SEED_*_PASSWORD env vars for one or more accounts. Set them in .env.local."
+    );
+  }
+  return accounts;
+}
+
+/** Creates the Neon Auth account if it doesn't exist yet, otherwise signs in to recover its id. */
+async function ensureAuthUser(account: SeedAccount) {
+  const signUpResult = await auth.signUp.email({
+    email: account.email,
+    password: account.password,
+    name: account.name,
+  });
+  if (signUpResult.data?.user) return signUpResult.data.user;
+
+  const signInResult = await auth.signIn.email({
+    email: account.email,
+    password: account.password,
+  });
+  if (signInResult.data?.user) return signInResult.data.user;
+
+  throw new Error(
+    `Could not provision Neon Auth account for ${account.email}: ` +
+      `${signUpResult.error?.message ?? "sign-up failed"} / ${signInResult.error?.message ?? "sign-in failed"}`
+  );
+}
 
 async function seedDatabase() {
   const dataSource = await getDataSource();
@@ -12,25 +55,27 @@ async function seedDatabase() {
 
   console.log("🌱 Starting database seed...");
 
-  // Seed Users
-  console.log("👤 Seeding users...");
-  const momUser = userRepo.create({
-    uid: "mom-uid-001",
-    email: "mom@household.local",
-    name: "Mom",
-    role: "admin",
-  });
-  await userRepo.save(momUser);
+  // Seed Users (real Neon Auth accounts + matching local rows)
+  console.log("👤 Provisioning Neon Auth accounts...");
+  const localUsers: Record<string, User> = {};
+  for (const account of seedAccounts()) {
+    const authUser = await ensureAuthUser(account);
 
-  const dadUser = userRepo.create({
-    uid: "dad-uid-002",
-    email: "dad@household.local",
-    name: "Dad",
-    role: "admin",
-  });
-  await userRepo.save(dadUser);
-
-  console.log("✅ Users seeded: Mom and Dad");
+    let localUser = await userRepo.findOneBy({ uid: authUser.id });
+    if (!localUser) {
+      localUser = userRepo.create({
+        uid: authUser.id,
+        email: account.email,
+        name: account.name,
+        role: "admin",
+      });
+      await userRepo.save(localUser);
+    }
+    localUsers[account.name.toLowerCase()] = localUser;
+  }
+  const momUser = localUsers["mom"];
+  const dadUser = localUsers["dad"];
+  console.log(`✅ Users seeded: ${Object.keys(localUsers).join(", ")}`);
 
   // Seed Categories
   console.log("📁 Seeding categories...");
@@ -112,18 +157,24 @@ async function seedDatabase() {
 
   console.log("🎉 Database seed completed successfully!");
   console.log("\n📋 Login credentials:");
-  console.log("  Mom: mom@household.local (Password via Neon Auth)");
-  console.log("  Dad: dad@household.local (Password via Neon Auth)");
+  for (const account of seedAccounts()) {
+    console.log(`  ${account.name}: ${account.email} (password set via .env.local)`);
+  }
 
-  await dataSource.destroy();
+  return { users: Object.keys(localUsers).length, categories: categories.length, expenses: 5 };
 }
 
 // Run seed if executed directly
 if (require.main === module) {
-  seedDatabase().catch((error) => {
-    console.error("❌ Seed failed:", error);
-    process.exit(1);
-  });
+  seedDatabase()
+    .then(async () => {
+      const ds = await getDataSource();
+      await ds.destroy();
+    })
+    .catch((error) => {
+      console.error("❌ Seed failed:", error);
+      process.exit(1);
+    });
 }
 
 export { seedDatabase };

@@ -7,40 +7,40 @@ import { User } from "./User";
 @Index("idx_expenses_logged_by", ["loggedByUserId"])
 export class Expense {
   @PrimaryGeneratedColumn("uuid")
-  id: string;
+  id!: string;
 
   @Column({ type: "date" })
-  date: string;
+  date!: string;
 
   @Column({ type: "decimal", precision: 12, scale: 2 })
-  amount: number;
+  amount!: number;
 
   @Column({ type: "varchar", length: 255 })
-  item: string;
+  item!: string;
 
   @Column({ type: "varchar", length: 255 })
-  userId: string; // The ID from Neon Auth (kept for audit)
+  userId!: string; // The ID from Neon Auth (kept for audit)
 
   @Column({ type: "text", nullable: true })
-  comments: string;
+  comments!: string | null;
 
   @ManyToOne(() => Category, category => category.expenses, { eager: true, onDelete: "CASCADE" })
   @JoinColumn({ name: "categoryId" })
-  category: Category;
+  category!: Category;
 
   @Column({ type: "uuid" })
-  categoryId: string;
+  categoryId!: string;
 
   @ManyToOne(() => User, { onDelete: "SET NULL" })
   @JoinColumn({ name: "loggedByUserId" })
-  loggedByUser: User;
+  loggedByUser!: User;
 
   @Column({ type: "uuid", nullable: true })
-  loggedByUserId: string;
+  loggedByUserId!: string | null;
 
   @CreateDateColumn()
-  createdAt: Date;
+  createdAt!: Date;
 
   @UpdateDateColumn()
-  updatedAt: Date;
+  updatedAt!: Date;
 }

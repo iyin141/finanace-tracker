@@ -3,7 +3,7 @@ import { getDataSource } from "@/_lib/typeorm";
 import { Expense } from "@/_lib/entities/Expense";
 import { Category } from "@/_lib/entities/Category";
 import { User } from "@/_lib/entities/User";
-import { verifyAuth } from "@/_lib/auth";
+import { getSessionUser } from "@/_lib/auth";
 
 /**
  * POST /api/upload
@@ -12,7 +12,7 @@ import { verifyAuth } from "@/_lib/auth";
  */
 export async function POST(req: NextRequest) {
   try {
-    const authUser = await verifyAuth(req);
+    const authUser = await getSessionUser();
     if (!authUser) {
       return NextResponse.json({ message: "Unauthenticated." }, { status: 401 });
     }
@@ -30,7 +30,7 @@ export async function POST(req: NextRequest) {
     const userRepo     = ds.getRepository(User);
 
     // Get the logged-in user from database
-    const user = await userRepo.findOneBy({ uid: authUser.uid }) || await userRepo.findOneBy({ email: authUser.email });
+    const user = await userRepo.findOneBy({ uid: authUser.id }) || await userRepo.findOneBy({ email: authUser.email });
 
     const errors: string[] = [];
     const saved: Expense[] = [];
@@ -60,7 +60,7 @@ export async function POST(req: NextRequest) {
         amount: Number(row.amount),
         item: row.item.trim(),
         categoryId: category.id,
-        userId: authUser.sub,
+        userId: authUser.id,
         loggedByUserId: user?.id || null,
       });
       await expenseRepo.save(expense);

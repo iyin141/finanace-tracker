@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getDataSource } from "@/_lib/typeorm";
 import { Expense } from "@/_lib/entities/Expense";
 import { Category } from "@/_lib/entities/Category";
-import { verifyAuth } from "@/_lib/auth";
+import { getSessionUser } from "@/_lib/auth";
 
 /**
  * GET /api/stats
@@ -14,7 +14,7 @@ import { verifyAuth } from "@/_lib/auth";
  */
 export async function GET(req: NextRequest) {
   try {
-    const authUser = await verifyAuth(req);
+    const authUser = await getSessionUser();
     if (!authUser) {
       return NextResponse.json({ message: "Unauthenticated." }, { status: 401 });
     }
@@ -73,7 +73,7 @@ export async function GET(req: NextRequest) {
 
     // --- Recent expenses (last 10) ---
     const recentExpenses = await expenseRepo.find({
-      relations: ["category", "loggedByUser"],
+      relations: { category: true, loggedByUser: true },
       order: { date: "DESC", createdAt: "DESC" },
       take: 10,
     });

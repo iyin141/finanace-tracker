@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getDataSource } from "@/_lib/typeorm";
 import { Expense } from "@/_lib/entities/Expense";
-import { verifyAuth } from "@/_lib/auth";
+import { getSessionUser } from "@/_lib/auth";
 
 interface Params { params: Promise<{ id: string }> }
 
@@ -12,7 +12,7 @@ export async function GET(_req: NextRequest, { params }: Params) {
     const repo = ds.getRepository(Expense);
     const expense = await repo.findOne({
       where: { id },
-      relations: ["category", "loggedByUser"],
+      relations: { category: true, loggedByUser: true },
     });
     if (!expense) return NextResponse.json({ message: "Not found." }, { status: 404 });
     return NextResponse.json({ data: expense });
@@ -24,7 +24,7 @@ export async function GET(_req: NextRequest, { params }: Params) {
 export async function PATCH(req: NextRequest, { params }: Params) {
   const { id } = await params;
   try {
-    const authUser = await verifyAuth(req);
+    const authUser = await getSessionUser();
     if (!authUser) {
       return NextResponse.json({ message: "Unauthenticated." }, { status: 401 });
     }
@@ -34,7 +34,7 @@ export async function PATCH(req: NextRequest, { params }: Params) {
     const repo = ds.getRepository(Expense);
     const expense = await repo.findOne({
       where: { id },
-      relations: ["loggedByUser"],
+      relations: { loggedByUser: true },
     });
     if (!expense) return NextResponse.json({ message: "Not found." }, { status: 404 });
 

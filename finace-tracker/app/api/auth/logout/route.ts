@@ -1,9 +1,10 @@
-import { NextRequest, NextResponse } from "next/server";
-import { clearAuthResponse } from "@/_lib/auth";
+import { NextResponse } from "next/server";
+import { auth } from "@/_lib/auth/server";
 
-export async function POST(req: NextRequest) {
+export async function POST() {
   try {
-    return clearAuthResponse({ message: "Logged out successfully." }, 200);
+    await auth.signOut();
+    return NextResponse.json({ message: "Logged out successfully." });
   } catch (err: any) {
     console.error("[POST /api/auth/logout]", err);
     return NextResponse.json({ message: err?.message ?? "Unexpected error." }, { status: 500 });

@@ -1,5 +1,7 @@
-import "dotenv/config";
+import { config } from "dotenv";
 import "reflect-metadata";
+
+config({ path: [".env.local", ".env"] });
 
 import { DataSource } from "typeorm";
 
@@ -16,7 +18,10 @@ export const AppDataSource = new DataSource({
 
   entities: [User, Expense, Category],
 
-  migrations: ["_lib/migrations/*.ts"],
+  // No `migrations` here: the app runtime never runs migrations, and TypeORM
+  // eagerly globs+loads migration .ts files at initialize() time even when
+  // unused, which breaks inside Next's bundled server (ESM/CJS interop).
+  // The CLI-only datasource in migrations-datasource.ts has it instead.
 
   ssl: {
     rejectUnauthorized: false,

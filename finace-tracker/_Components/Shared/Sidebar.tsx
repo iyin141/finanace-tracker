@@ -12,7 +12,9 @@ import {
   Wallet,
   TrendingUp,
   Calendar,
+  ShieldCheck,
 } from 'lucide-react'
+import { useAuthStore } from '@/_Stores/useAuthStore'
 
 const navItems = [
   { id: 'dashboard',   label: 'Dashboard',           icon: LayoutDashboard, href: '/dashboard' },
@@ -24,12 +26,16 @@ const navItems = [
   { id: 'monthly-comp', label: 'Monthly Comparison', icon: Calendar,         href: '/dashboard/monthly-comparison' },
 ]
 
+const adminNavItem = { id: 'admin', label: 'Admin', icon: ShieldCheck, href: '/dashboard/admin' }
+
 interface SidebarProps {
   onLogout?: () => void
 }
 
 export default function Sidebar({ onLogout }: SidebarProps) {
   const pathname = usePathname()
+  const { user } = useAuthStore()
+  const items = user?.role === 'admin' ? [...navItems, adminNavItem] : navItems
 
   return (
     <aside className="fixed left-0 top-0 z-30 flex h-screen w-64 flex-col border-r"
@@ -47,7 +53,7 @@ export default function Sidebar({ onLogout }: SidebarProps) {
 
       {/* Nav */}
       <nav className="flex-1 px-4 py-6 overflow-y-auto space-y-1.5">
-        {navItems.map((item) => {
+        {items.map((item) => {
           const Icon = item.icon
           const isActive =
             item.href === '/dashboard'

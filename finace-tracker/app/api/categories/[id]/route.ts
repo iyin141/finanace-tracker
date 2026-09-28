@@ -9,7 +9,7 @@ export async function GET(_req: NextRequest, { params }: Params) {
   try {
     const ds = await getDataSource();
     const repo = ds.getRepository(Category);
-    const category = await repo.findOne({ where: { id }, relations: ["expenses"] });
+    const category = await repo.findOne({ where: { id }, relations: { expenses: true } });
     if (!category) return NextResponse.json({ message: "Not found." }, { status: 404 });
     return NextResponse.json({ data: category });
   } catch (err: any) {

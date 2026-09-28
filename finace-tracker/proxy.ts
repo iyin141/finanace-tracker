@@ -1,23 +1,28 @@
 import { NextRequest, NextResponse } from "next/server";
+import { auth } from "@/_lib/auth/server";
 
 const PROTECTED_ROUTES = ["/dashboard"];
 const AUTH_ROUTES = ["/auth/login"];
 
-export function middleware(req: NextRequest) {
-  const { pathname } = req.nextUrl;
-  const token = req.cookies.get("auth_token")?.value;
+export async function proxy(request: NextRequest) {
+  const { pathname } = request.nextUrl;
 
   const isProtected = PROTECTED_ROUTES.some((r) => pathname.startsWith(r));
   const isAuthRoute = AUTH_ROUTES.some((r) => pathname.startsWith(r));
 
-  // Redirect authenticated users away from auth pages
-  if (isAuthRoute && token) {
-    return NextResponse.redirect(new URL("/dashboard", req.url));
+  if (!isProtected && !isAuthRoute) {
+    return NextResponse.next();
   }
 
-  // Redirect unauthenticated users to login
-  if (isProtected && !token) {
-    const url = new URL("/auth/login", req.url);
+  const { data } = await auth.getSession();
+  const isAuthenticated = Boolean(data?.user);
+
+  if (isAuthRoute && isAuthenticated) {
+    return NextResponse.redirect(new URL("/dashboard", request.url));
+  }
+
+  if (isProtected && !isAuthenticated) {
+    const url = new URL("/auth/login", request.url);
     url.searchParams.set("next", pathname);
     return NextResponse.redirect(url);
   }

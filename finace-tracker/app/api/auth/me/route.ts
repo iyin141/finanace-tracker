@@ -1,24 +1,22 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import { getDataSource } from "@/_lib/typeorm";
 import { User } from "@/_lib/entities/User";
-import { verifyAuth } from "@/_lib/auth";
+import { getSessionUser } from "@/_lib/auth";
 
-export async function GET(req: NextRequest) {
+export async function GET() {
   try {
-    const authUser = await verifyAuth(req);
-    if (!authUser) {
+    const sessionUser = await getSessionUser();
+    if (!sessionUser) {
       return NextResponse.json({ message: "Unauthenticated." }, { status: 401 });
     }
 
     const dataSource = await getDataSource();
     const userRepo = dataSource.getRepository(User);
 
-    // Find user by uid or email
-    let user = await userRepo.findOneBy({ uid: authUser.uid });
-    if (!user && authUser.email) {
-      user = await userRepo.findOneBy({ email: authUser.email });
+    let user = await userRepo.findOneBy({ uid: sessionUser.id });
+    if (!user) {
+      user = await userRepo.findOneBy({ email: sessionUser.email });
     }
-
     if (!user) {
       return NextResponse.json({ message: "User not found." }, { status: 404 });
     }
