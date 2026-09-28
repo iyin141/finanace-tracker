@@ -34,7 +34,7 @@ A comprehensive household expense tracking application built with Next.js 16, Ty
 
 - Node.js 18+ 
 - Neon PostgreSQL database
-- Neon Auth endpoint configured
+- Neon-Vercel integration with the Auth toggle enabled (or a Neon Auth-enabled project, for local dev)
 
 ### Environment Setup
 
@@ -48,12 +48,10 @@ npm install
 ```bash
 DATABASE_URL=postgresql://user:pass@ep-xxx.region.aws.neon.tech/dbname?sslmode=require
 ```
-On Vercel, `APP_URL` is derived automatically from the platform's `VERCEL_URL` — set it
-explicitly only for a non-Vercel host or a custom domain.
 
 4. Create a `.env.local` file (gitignored, never committed) with:
 ```bash
-NEON_AUTH_BASE_URL=https://ep-red-mountain-b4lbh23r.neonauth.c-6.us-east-2.aws.neon.tech/neondb/auth
+NEON_AUTH_BASE_URL=https://ep-xxx.neonauth.region.aws.neon.tech/<db>/auth
 NEON_AUTH_COOKIE_SECRET=<openssl rand -base64 32>
 SEED_IYIN_EMAIL=iyin@household.local
 SEED_IYIN_PASSWORD=<real password>
@@ -63,6 +61,9 @@ SEED_DAD_EMAIL=dad@household.local
 SEED_DAD_PASSWORD=<real password>
 ```
 
+On Vercel, `NEON_AUTH_BASE_URL` comes from the
+[Neon-Vercel integration](https://neon.com/docs/guides/neon-managed-vercel-integration)
+(Auth toggle) automatically — only `NEON_AUTH_COOKIE_SECRET` needs to be set by hand there.
 See [SETUP.md](./SETUP.md) for the full breakdown.
 
 ### Database Setup

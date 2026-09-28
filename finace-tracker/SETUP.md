@@ -7,14 +7,11 @@ Create a `.env` file with the database connection, and a `.env.local` file (giti
 ```bash
 # .env — Database Configuration
 DATABASE_URL=postgresql://user:pass@ep-xxx.region.aws.neon.tech/dbname?sslmode=require
-# APP_URL is optional — on Vercel it's derived automatically from the
-# platform's own VERCEL_URL env var. Set APP_URL explicitly only for a
-# non-Vercel host or a custom domain.
 ```
 
 ```bash
 # .env.local — Managed Better Auth (Neon Auth) Configuration
-NEON_AUTH_BASE_URL=https://ep-red-mountain-b4lbh23r.neonauth.c-6.us-east-2.aws.neon.tech/neondb/auth
+NEON_AUTH_BASE_URL=https://ep-xxx.neonauth.region.aws.neon.tech/<db>/auth
 NEON_AUTH_COOKIE_SECRET=<openssl rand -base64 32>
 
 # Seed-time admin account passwords (used only by _lib/seed/seedDatabase.ts)
@@ -25,6 +22,13 @@ SEED_MOM_PASSWORD=<real password>
 SEED_DAD_EMAIL=dad@household.local
 SEED_DAD_PASSWORD=<real password>
 ```
+
+On Vercel, `NEON_AUTH_BASE_URL` is injected automatically by the
+[Neon-Vercel integration](https://neon.com/docs/guides/neon-managed-vercel-integration)
+once the Auth toggle is enabled — don't set it by hand there. `NEON_AUTH_COOKIE_SECRET` is
+**not** provided by the integration and must be set manually, both locally in `.env.local` and
+in Vercel's Production/Preview/Development env vars (same value across environments that share
+a database, since it signs the session cookie).
 
 `NEON_AUTH_COOKIE_SECRET` must be at least 32 characters. Both `.env` and `.env.local` are covered by `.env*` in `.gitignore` — verify that stays true before committing.
 

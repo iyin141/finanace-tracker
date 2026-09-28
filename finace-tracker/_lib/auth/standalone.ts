@@ -1,8 +1,7 @@
 import { createAuthServer } from "@neondatabase/auth/server";
 
-/** Resolves the current deployment's origin without a hardcoded APP_URL. */
+/** Resolves the current deployment's origin, trusted by Neon Auth's Origin check. */
 function resolveOrigin(): string {
-  if (process.env.APP_URL) return process.env.APP_URL;
   // Vercel injects VERCEL_URL (host only, no protocol) at build & runtime.
   if (process.env.VERCEL_URL) return `https://${process.env.VERCEL_URL}`;
   return "http://localhost:3000";
