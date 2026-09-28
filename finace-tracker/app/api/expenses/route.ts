@@ -2,10 +2,16 @@ import { NextRequest, NextResponse } from "next/server";
 import { getDataSource } from "@/_lib/typeorm";
 import { Expense } from "@/_lib/entities/Expense";
 import { Category } from "@/_lib/entities/Category";
-import { getMockUser } from "@/_lib/auth";
+import { User } from "@/_lib/entities/User";
+import { verifyAuth } from "@/_lib/auth";
 
 export async function GET(req: NextRequest) {
   try {
+    const authUser = await verifyAuth(req);
+    if (!authUser) {
+      return NextResponse.json({ message: "Unauthenticated." }, { status: 401 });
+    }
+
     const { searchParams } = new URL(req.url);
     const categoryId = searchParams.get("categoryId");
     const month      = searchParams.get("month"); // format: YYYY-MM
@@ -17,6 +23,7 @@ export async function GET(req: NextRequest) {
     let qb = expenseRepo
       .createQueryBuilder("e")
       .leftJoinAndSelect("e.category", "c")
+      .leftJoinAndSelect("e.loggedByUser", "u")
       .orderBy("e.date", "DESC")
       .addOrderBy("e.createdAt", "DESC")
       .take(limit);
@@ -40,11 +47,16 @@ export async function GET(req: NextRequest) {
 
 export async function POST(req: NextRequest) {
   try {
-    const user = getMockUser();
+    const authUser = await verifyAuth(req);
+    if (!authUser) {
+      return NextResponse.json({ message: "Unauthenticated." }, { status: 401 });
+    }
+
     const body = await req.json();
     const dataSource = await getDataSource();
     const expenseRepo  = dataSource.getRepository(Expense);
     const categoryRepo = dataSource.getRepository(Category);
+    const userRepo     = dataSource.getRepository(User);
 
     if (!body.date || !body.amount || !body.item || !body.categoryId) {
       return NextResponse.json({ message: "date, amount, item, categoryId are required." }, { status: 400 });
@@ -55,12 +67,17 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ message: "Category not found." }, { status: 400 });
     }
 
+    // Get the logged-in user from database
+    const user = await userRepo.findOneBy({ uid: authUser.uid }) || await userRepo.findOneBy({ email: authUser.email });
+
     const expense = expenseRepo.create({
-      date:       body.date,
-      amount:     Number(body.amount),
-      item:       String(body.item).trim(),
-      categoryId: category.id,
-      userId:     user.sub,
+      date:           body.date,
+      amount:         Number(body.amount),
+      item:           String(body.item).trim(),
+      categoryId:     category.id,
+      userId:         authUser.sub,
+      comments:       body.comments || null,
+      loggedByUserId: user?.id || null,
     });
 
     await expenseRepo.save(expense);

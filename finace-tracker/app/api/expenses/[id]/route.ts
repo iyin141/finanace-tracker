@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getDataSource } from "@/_lib/typeorm";
 import { Expense } from "@/_lib/entities/Expense";
+import { verifyAuth } from "@/_lib/auth";
 
 interface Params { params: Promise<{ id: string }> }
 
@@ -9,7 +10,10 @@ export async function GET(_req: NextRequest, { params }: Params) {
   try {
     const ds = await getDataSource();
     const repo = ds.getRepository(Expense);
-    const expense = await repo.findOneBy({ id });
+    const expense = await repo.findOne({
+      where: { id },
+      relations: ["category", "loggedByUser"],
+    });
     if (!expense) return NextResponse.json({ message: "Not found." }, { status: 404 });
     return NextResponse.json({ data: expense });
   } catch (err: any) {
@@ -20,12 +24,27 @@ export async function GET(_req: NextRequest, { params }: Params) {
 export async function PATCH(req: NextRequest, { params }: Params) {
   const { id } = await params;
   try {
+    const authUser = await verifyAuth(req);
+    if (!authUser) {
+      return NextResponse.json({ message: "Unauthenticated." }, { status: 401 });
+    }
+
     const body = await req.json();
     const ds = await getDataSource();
     const repo = ds.getRepository(Expense);
-    const expense = await repo.findOneBy({ id });
+    const expense = await repo.findOne({
+      where: { id },
+      relations: ["loggedByUser"],
+    });
     if (!expense) return NextResponse.json({ message: "Not found." }, { status: 404 });
-    Object.assign(expense, body);
+
+    // Update only allowed fields
+    if (body.date !== undefined) expense.date = body.date;
+    if (body.amount !== undefined) expense.amount = Number(body.amount);
+    if (body.item !== undefined) expense.item = String(body.item).trim();
+    if (body.categoryId !== undefined) expense.categoryId = body.categoryId;
+    if (body.comments !== undefined) expense.comments = body.comments;
+
     await repo.save(expense);
     return NextResponse.json({ data: expense });
   } catch (err: any) {

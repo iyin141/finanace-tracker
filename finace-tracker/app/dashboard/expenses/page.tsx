@@ -10,10 +10,12 @@ interface Category { id: string; name: string; color: string; budgetAmount: numb
 interface Expense {
   id: string; date: string; amount: number; item: string
   category: Category; categoryId: string
+  comments?: string
+  loggedByUser?: { id: string; name: string }
 }
 
 interface FormValues {
-  date: string; amount: number; item: string; categoryId: string
+  date: string; amount: number; item: string; categoryId: string; comments?: string
 }
 
 export default function ExpensesPage() {
@@ -64,6 +66,7 @@ export default function ExpensesPage() {
     setValue('amount', e.amount)
     setValue('item', e.item)
     setValue('categoryId', e.categoryId)
+    setValue('comments', e.comments || '')
     setShowForm(true)
   }
 
@@ -74,7 +77,7 @@ export default function ExpensesPage() {
       const res = await fetch(url, {
         method,
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ...values, userId: 'mock-user-id' }),
+        body: JSON.stringify(values),
       })
       if (!res.ok) throw new Error((await res.json()).message)
       showToast('success', editing ? 'Expense updated.' : 'Expense logged.')
@@ -186,7 +189,7 @@ export default function ExpensesPage() {
               <table className="w-full text-sm">
                 <thead>
                   <tr className="bg-slate-50 border-b border-slate-100">
-                    {['Date', 'Item', 'Category', 'Amount', 'Actions'].map((h) => (
+                    {['Date', 'Item', 'Category', 'Amount', 'Comments', 'Logged By', 'Actions'].map((h) => (
                       <th key={h} className="px-6 py-3.5 text-left text-xs font-semibold uppercase tracking-wider text-slate-500">
                         {h}
                       </th>
@@ -210,6 +213,12 @@ export default function ExpensesPage() {
                       </td>
                       <td className="px-6 py-4 font-semibold text-slate-900">
                         {formatNaira(e.amount)}
+                      </td>
+                      <td className="px-6 py-4 text-xs text-slate-500 max-w-xs truncate">
+                        {e.comments || '—'}
+                      </td>
+                      <td className="px-6 py-4 text-xs text-slate-500">
+                        {e.loggedByUser?.name || '—'}
                       </td>
                       <td className="px-6 py-4">
                         <div className="flex items-center gap-2">
@@ -268,6 +277,14 @@ export default function ExpensesPage() {
                   {...register('amount', { required: 'Amount is required', min: { value: 1, message: 'Must be > 0' } })}
                   className="field-input" />
               </Field>
+              <Field label="Comments (optional)">
+                <textarea
+                  {...register('comments')}
+                  placeholder="Add any notes about this expense..."
+                  rows={3}
+                  className="field-input resize-none"
+                />
+              </Field>
               <button
                 type="submit"
                 disabled={isSubmitting}
@@ -295,6 +312,9 @@ export default function ExpensesPage() {
         .field-input:focus {
           border-color: #000000;
           box-shadow: 0 0 0 1px #000000;
+        }
+        .field-input.resize-none {
+          resize: none;
         }
       `}</style>
     </DashboardLayout>

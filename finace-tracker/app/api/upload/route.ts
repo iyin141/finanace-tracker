@@ -2,7 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { getDataSource } from "@/_lib/typeorm";
 import { Expense } from "@/_lib/entities/Expense";
 import { Category } from "@/_lib/entities/Category";
-import { getMockUser } from "@/_lib/auth";
+import { User } from "@/_lib/entities/User";
+import { verifyAuth } from "@/_lib/auth";
 
 /**
  * POST /api/upload
@@ -11,7 +12,11 @@ import { getMockUser } from "@/_lib/auth";
  */
 export async function POST(req: NextRequest) {
   try {
-    const user = getMockUser(); // swap to verifyAuth(req) in production
+    const authUser = await verifyAuth(req);
+    if (!authUser) {
+      return NextResponse.json({ message: "Unauthenticated." }, { status: 401 });
+    }
+
     const rows: { date: string; amount: number; category: string; item: string }[] =
       await req.json();
 
@@ -22,6 +27,10 @@ export async function POST(req: NextRequest) {
     const ds = await getDataSource();
     const expenseRepo  = ds.getRepository(Expense);
     const categoryRepo = ds.getRepository(Category);
+    const userRepo     = ds.getRepository(User);
+
+    // Get the logged-in user from database
+    const user = await userRepo.findOneBy({ uid: authUser.uid }) || await userRepo.findOneBy({ email: authUser.email });
 
     const errors: string[] = [];
     const saved: Expense[] = [];
@@ -51,7 +60,8 @@ export async function POST(req: NextRequest) {
         amount: Number(row.amount),
         item: row.item.trim(),
         categoryId: category.id,
-        userId: user.sub,
+        userId: authUser.sub,
+        loggedByUserId: user?.id || null,
       });
       await expenseRepo.save(expense);
       saved.push(expense);

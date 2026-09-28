@@ -1,12 +1,13 @@
 'use client'
 
-import { Bell, Search } from 'lucide-react'
+import { Bell, Search, Shield } from 'lucide-react'
 
 interface TopNavbarProps {
   pageHeader?: string
   name?: string
   role?: string
   initials?: string
+  email?: string
 }
 
 export default function TopNavbar({
@@ -14,6 +15,7 @@ export default function TopNavbar({
   name = 'Household Admin',
   role = 'Owner',
   initials = 'HA',
+  email = '',
 }: TopNavbarProps) {
   return (
     <header
@@ -32,9 +34,9 @@ export default function TopNavbar({
         {/* Search */}
         <div className="hidden md:flex items-center gap-2 rounded-md px-3 h-9 bg-slate-50 border border-slate-200 text-sm text-slate-500 focus-within:border-black focus-within:ring-1 focus-within:ring-black">
           <Search size={14} className="text-slate-400" />
-          <input 
-            type="text" 
-            placeholder="Search…" 
+          <input
+            type="text"
+            placeholder="Search…"
             className="bg-transparent border-none outline-none w-32 focus:w-48 transition-all"
           />
         </div>
@@ -50,11 +52,19 @@ export default function TopNavbar({
         {/* Avatar */}
         <div className="flex items-center gap-3">
           <div className="hidden md:block text-right">
-            <p className="text-sm font-semibold leading-none text-slate-900">
-              {name}
-            </p>
+            <div className="flex items-center gap-2 justify-end">
+              <p className="text-sm font-semibold leading-none text-slate-900">
+                {name}
+              </p>
+              {role === 'admin' && (
+                <span className="inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-xs font-medium bg-slate-100 text-slate-700 border border-slate-200">
+                  <Shield size={10} />
+                  Admin
+                </span>
+              )}
+            </div>
             <p className="text-xs mt-1 text-slate-500">
-              {role}
+              {email}
             </p>
           </div>
           <div className="w-9 h-9 rounded-full flex items-center justify-center bg-black text-white text-xs font-bold shadow-sm">

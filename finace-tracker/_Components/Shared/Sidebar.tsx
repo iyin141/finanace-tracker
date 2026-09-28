@@ -10,14 +10,18 @@ import {
   BarChart2,
   LogOut,
   Wallet,
+  TrendingUp,
+  Calendar,
 } from 'lucide-react'
 
 const navItems = [
-  { id: 'dashboard',   label: 'Dashboard',   icon: LayoutDashboard, href: '/dashboard' },
-  { id: 'expenses',    label: 'Expenses',     icon: Receipt,          href: '/dashboard/expenses' },
-  { id: 'categories',  label: 'Categories',   icon: Tag,              href: '/dashboard/categories' },
-  { id: 'upload',      label: 'Upload CSV',   icon: Upload,           href: '/dashboard/upload' },
-  { id: 'reports',     label: 'Reports',      icon: BarChart2,        href: '/dashboard/reports' },
+  { id: 'dashboard',   label: 'Dashboard',           icon: LayoutDashboard, href: '/dashboard' },
+  { id: 'expenses',    label: 'Expenses',            icon: Receipt,          href: '/dashboard/expenses' },
+  { id: 'categories',  label: 'Categories',         icon: Tag,              href: '/dashboard/categories' },
+  { id: 'upload',      label: 'Upload CSV',          icon: Upload,           href: '/dashboard/upload' },
+  { id: 'reports',     label: 'Reports',             icon: BarChart2,        href: '/dashboard/reports' },
+  { id: 'price-comp',  label: 'Price Comparison',    icon: TrendingUp,       href: '/dashboard/price-comparison' },
+  { id: 'monthly-comp', label: 'Monthly Comparison', icon: Calendar,         href: '/dashboard/monthly-comparison' },
 ]
 
 interface SidebarProps {

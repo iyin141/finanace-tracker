@@ -6,12 +6,17 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "migration:run": "tsx ./node_modules/typeorm/cli.js migration:run -d _lib/typeorm.ts",
+    "migration:generate": "tsx ./node_modules/typeorm/cli.js migration:generate _lib/migrations/Initial -d _lib/typeorm.ts",
+    "migration:revert": "tsx ./node_modules/typeorm/cli.js migration:revert -d _lib/typeorm.ts",
+    "seed": "tsx _lib/seed/seedDatabase.ts"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.9.1",
     "@neondatabase/serverless": "^1.1.0",
     "bcryptjs": "^3.0.3",
+    "dotenv": "^18.0.4",
     "jose": "^6.2.12",
     "jspdf": "^4.2.1",
     "jspdf-autotable": "^5.0.8",
@@ -36,6 +41,8 @@
     "eslint": "^9",
     "eslint-config-next": "16.3.6",
     "tailwindcss": "^4",
+    "ts-node": "^10.9.2",
+    "tsx": "^4.23.15",
     "typescript": "^5"
   }
 }
